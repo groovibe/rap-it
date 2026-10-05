@@ -82,17 +82,21 @@ body.myturn #bg .glow{background:radial-gradient(closest-side,rgba(255,194,26,.2
 #lyr{position:absolute;left:0;right:0;top:0;padding:0 22px;transition:transform .45s cubic-bezier(.2,.8,.2,1);will-change:transform}
 .ln{position:relative;font-family:BC,sans-serif;font-weight:800;font-size:22px;line-height:1.1;color:#55565c;
   padding:9px 0 9px 0;transition:color .25s,font-size .25s,opacity .25s;letter-spacing:.005em}
-.ln.cur{color:var(--txt);font-size:29px;text-shadow:0 0 22px rgba(255,194,26,.18)}
+.ln.cur{color:#c9c7c0;font-size:29px}
+.ln .w{transition:color .08s}
+.ln.cur .w.sung{color:#fff;text-shadow:0 0 18px rgba(255,255,255,.25)}
+body.myturn .ln.cur .w{color:#8a7a45}
+body.myturn .ln.cur .w.sung{color:var(--taxi);text-shadow:0 0 18px rgba(255,194,26,.35)}
 .ln.near{color:#8b8c93}
 .ln .who{display:none;font-family:Anton,sans-serif;font-size:11px;letter-spacing:.18em;padding:2px 6px 1px;border-radius:4px;
   margin-right:8px;vertical-align:4px}
 body.trade .ln .who{display:inline-block}
 .ln.pac .who{background:#2a2a2f;color:#cfd0d6}
 .ln.you .who{background:var(--taxi);color:#111}
-body.trade .ln.you.cur{color:var(--taxi)}
+body.trade .ln.you.cur .w.sung{color:var(--taxi)}
 .ln .bar{position:absolute;left:0;bottom:2px;height:3px;border-radius:2px;background:var(--taxi);width:0;opacity:0}
 .ln.turn .bar{opacity:1}
-.ln.turn{color:var(--taxi)}
+.ln .bar{height:4px;bottom:0}
 #lyrmsg{position:absolute;left:0;right:0;top:40%;text-align:center;color:var(--dim);font-size:18px;letter-spacing:.12em}
 /* ---------- hype layer ---------- */
 #hype{position:fixed;left:0;right:0;top:calc(var(--safe-t) + 4px);height:min(30vh,250px);z-index:5;pointer-events:none;display:flex;align-items:center;justify-content:center}
@@ -229,20 +233,33 @@ const SONGS = [
   title:"2 OF AMERIKAZ MOST WANTED",
   artist:"2PAC × SNOOP",
   lrclib:{ids:[30048219,15103506,33599280,18644727], track:"2 Of Amerikaz Most Wanted", artist:"2Pac", duration:247},
-  verse:{from:"picture perfect", to:"me and snoop about to clown", end:56.45},
-  // per-line starts measured against the album audio (song time). Used when LRCLIB's
-  // verse has the same line count; otherwise LRCLIB's own clock + lrcShift is used.
-  timing:[23.71,25.57,27.79,30.47,32.17,33.85,35.27,37.93,40.05,42.47,44.69,47.87,49.27,51.99,54.85],
-  lrcShift:-2.0,
-  preroll:2.4,              // song-seconds of groove before the first line (= 1 bar)
-  bpm:99.2, beat0:14.463,   // for the speaker pulse
-  videos:[ {id:"sIPwqxN3biI", name:"OFFICIAL", shift:0},
-           {id:"9wVtWAwTMPU", name:"ALT",      shift:0},
-           {id:"lElIKEEKVlk", name:"ALT 2",    shift:0} ],
-  // instrumentals, aligned to the album by onset cross-correlation (fan-upload instrumentals; playback via YouTube embed)
-  beats: [ {id:"Cx9mSkhWZew", name:"BEAT",   shift:-6.08},
-           {id:"XUxEa2GYKSo", name:"BEAT 2", shift:-4.42},
-           {id:"GQIsN7C4Wfo", name:"BEAT 3", shift:-6.46} ]
+  verse:{from:"picture perfect", to:"me and snoop about to clown"},
+  /* Timing = media time of the album audio (same clock as every album upload we measured).
+     Word onsets come from forced alignment (wav2vec2/MMS) of the LRCLIB text against the audio,
+     cross-checked with whisper word stamps and vocal energy (original minus aligned instrumental).
+     Only numbers live here; the lyric text is still pulled from LRCLIB at runtime. */
+  timing:{
+    on:  [25.82,27.66,30.10,32.54,34.27,35.94,37.38,40.12,42.37,44.81,46.93,50.23,51.44,54.18,57.20],
+    end: [27.62,30.06,32.51,34.25,35.91,37.11,40.07,42.15,44.57,46.79,49.41,51.20,53.62,56.98,58.62],
+    after:58.94,   // next vocal onset after the verse ("I'm losin'...")
+    words:[[25.82, 26.14, 26.4, 26.76, 27.0, 27.06, 27.36], [27.66, 27.86, 27.98, 28.28, 28.44, 28.88, 29.06, 29.48, 29.64, 29.82], [30.1, 30.28, 30.52, 30.7, 31.52, 31.78, 31.9, 32.24], [32.55, 32.74, 32.83, 33.45, 33.77, 33.87, 34.13], [34.27, 34.55, 34.87, 34.93, 35.09, 35.21, 35.43, 35.51, 35.71], [35.95, 36.15, 36.29, 36.47, 36.67, 36.75, 36.93], [37.39, 37.59, 37.75, 38.01, 38.07, 38.31, 38.91, 39.21, 39.45, 39.63], [40.11, 40.39, 40.89, 41.03, 41.15, 41.31, 41.49, 41.59, 41.93], [42.37, 42.53, 42.65, 42.79, 43.05, 43.33, 43.43, 43.61, 43.73, 43.95, 44.05, 44.27], [44.81, 45.01, 45.25, 45.41, 45.73, 45.85, 45.99, 46.49, 46.59], [46.93, 47.05, 47.21, 47.59, 47.63, 47.97, 48.23, 48.37, 48.59, 49.09], [50.23, 50.35, 50.52, 50.66, 50.84, 51.02], [51.44, 51.55, 52.46, 53.08, 53.38], [54.18, 54.44, 54.6, 54.88, 55.02, 55.12, 55.42, 55.64, 55.76, 56.0, 56.24, 56.38, 56.6], [57.2, 57.28, 57.46, 57.8, 58.06, 58.2]]
+  },
+  // phrase units = how ECHO / TRADE cut the verse (indices into the 15 verse lines); rhyming
+  // half-bars are kept together so nothing ends mid-thought
+  phrases:[[0],[1],[2],[3],[4,5],[6],[7],[8],[9],[10],[11,12],[13],[14]],
+  lead:0.12, tail:0.14,     // seconds of padding before the first / after the last word of a phrase
+  lrcShift:0,
+  preroll:2.42,             // one bar of groove before the first phrase
+  bpm:99.256, beat0:6.203,  // speaker pulse grid (song time)
+  // 9wVtWAwTMPU is the exact file the timing was measured on -> primary. Topic uploads are the same
+  // album master (all album uploads we checked agree within ~0.1-0.3 s) and stay as fallbacks.
+  videos:[ {id:"9wVtWAwTMPU", name:"MAIN",     shift:0},
+           {id:"sIPwqxN3biI", name:"OFFICIAL", shift:0},
+           {id:"lElIKEEKVlk", name:"ALT",      shift:0} ],
+  // instrumentals aligned to the album by waveform cross-correlation of the actual uploads
+  beats: [ {id:"Cx9mSkhWZew", name:"BEAT",   shift:-6.118},
+           {id:"XUxEa2GYKSo", name:"BEAT 2", shift:-4.43},
+           {id:"GQIsN7C4Wfo", name:"BEAT 3", shift:-6.468} ]
  }
 ];
 const HYPE = ["YEAH!!","DOPE!","YES!!","COOL!","KEEP GOING,\nMAN","LET'S GO!","AYY!","WESTSIDE!","EASTSIDE!","UH!","WOO!",
@@ -310,16 +327,39 @@ async function loadLyrics(){
     }
   }
   if(!verse) return false;
-  if(Array.isArray(song.timing)&&song.timing.length===verse.length) verse.forEach((l,i)=>l.t=song.timing[i]);
-  else verse.forEach(l=>l.t+=song.lrcShift||0);
-  verse.forEach((l,i)=>{l.e=i<verse.length-1?verse[i+1].t:song.verse.end; l.who=i%2?"you":"pac"});
-  S.lines=verse; return true;
+  S.lines=buildPhrases(verse); return true;
+}
+function buildPhrases(verse){
+  const T=song.timing, ok=T&&T.on.length===verse.length;
+  const on=ok?T.on:verse.map(l=>l.t+(song.lrcShift||0));
+  const end=ok?T.end:verse.map((l,i)=>i<verse.length-1?verse[i+1].t+(song.lrcShift||0)-0.05:l.t+2.4);
+  const groups=ok&&song.phrases?song.phrases:verse.map((_,i)=>[i]);
+  const P=groups.map(g=>({ls:g.map(i=>({s:verse[i].s,
+        w:(ok&&T.words[i]&&T.words[i].length===verse[i].s.split(/\s+/).length)?T.words[i]:null})),
+        on:on[g[0]], end:end[g[g.length-1]] }));
+  const lead=song.lead||0.12, tail=song.tail||0.14;
+  P.forEach((p,k)=>{
+    const prevEnd=k?P[k-1].end:-1e9, nextOn=k<P.length-1?P[k+1].on:(ok&&T.after?T.after:p.end+1);
+    p.t=Math.max(p.on-lead, prevEnd+0.01);          // segment start (clean: never inside the previous word)
+    p.e=Math.min(p.end+tail, nextOn-0.03);          // segment end (after the last word, before the next one)
+    p.who=k%2?"you":"pac"; p.s=p.ls.map(l=>l.s).join(" / ");
+  });
+  return P;
 }
 function renderLyrics(){
   const box=$("#lyr"); box.innerHTML="";
-  S.lines.forEach((l,i)=>{
-    const d=document.createElement("div"); d.className="ln "+l.who; d.dataset.i=i;
-    d.innerHTML=`<span class="who">${l.who==="you"?"YOU":"PAC"}</span>`; d.appendChild(document.createTextNode(l.s));
+  S.lines.forEach((p,i)=>{
+    const d=document.createElement("div"); d.className="ln "+p.who; d.dataset.i=i;
+    d.innerHTML=`<span class="who">${p.who==="you"?"YOU":"PAC"}</span>`;
+    p.wd=[];
+    p.ls.forEach((l,j)=>{
+      if(j) d.appendChild(document.createElement("br"));
+      const toks=l.s.split(/\s+/);
+      toks.forEach((tk,n)=>{ const sp=document.createElement("span"); sp.className="w"; sp.textContent=tk+(n<toks.length-1?" ":"");
+        d.appendChild(sp); p.wd.push({el:sp,on:l.w?l.w[n]:null}); });
+    });
+    // lines without word timing: spread their words evenly over the phrase
+    const miss=p.wd.filter(x=>x.on==null); if(miss.length) miss.forEach((x,n)=>x.on=p.on+(p.end-p.on)*n/miss.length);
     const b=document.createElement("i"); b.className="bar"; d.appendChild(b);
     box.appendChild(d);
   });
@@ -335,6 +375,15 @@ function setCur(i,force){
   const y=el.offsetTop - stage.clientHeight*0.36 + el.offsetHeight/2;
   $("#lyr").style.transform=`translateY(${-Math.max(-stage.clientHeight*0.3,y)}px)`;
 }
+let litP=-1, litN=-1;
+function lightWords(i,t){ // karaoke: words light up as they are rapped (t = song time on the lyric clock)
+  if(i!==litP){ if(litP>=0&&S.lines[litP]) S.lines[litP].wd.forEach(x=>x.el.classList.remove("sung")); litP=i; litN=-1 }
+  const p=S.lines[i]; if(!p||!p.wd) return;
+  let n=-1; for(let k=0;k<p.wd.length;k++) if(t>=p.wd[k].on-0.03) n=k; else break;
+  if(n===litN) return; litN=n;
+  p.wd.forEach((x,k)=>x.el.classList.toggle("sung",k<=n));
+}
+function clearWords(){ if(litP>=0&&S.lines[litP]) S.lines[litP].wd.forEach(x=>x.el.classList.remove("sung")); litP=-1; litN=-1 }
 function lineAt(t){ // song time -> line index (or -1 before, lines.length after)
   const L=S.lines; if(!L.length) return -1;
   if(t<L[0].t) return -1;
@@ -350,7 +399,7 @@ const SRC={A:LS.get("srcA:"+song.key,0), B:LS.get("srcB:"+song.key,0)};
 const clk={A:{t:0,at:0,st:-1,ok:false},B:{t:0,at:0,st:-1,ok:false}};
 let ytReady=false;
 function loadYT(){
-  window.onYouTubeIframeAPIReady=()=>{ytReady=true; makePlayer("A"); if(S.mode!=="follow") makePlayer("B")};
+  window.onYouTubeIframeAPIReady=()=>{ytReady=true; makePlayer("A"); setTimeout(()=>makePlayer("B"),1500)};
   const s=document.createElement("script"); s.src="https://www.youtube.com/iframe_api"; s.async=true;
   s.onerror=()=>msg("OFFLINE"); document.head.appendChild(s);
 }
@@ -385,6 +434,7 @@ function songToVid(k,t){return t+shift(k)}
 function preroll(){return song.preroll||2}
 function onState(k,st){
   clk[k].st=st;
+  if(st===1&&playAt[k]){ const d=(now()-playAt[k])/1000; if(d>0.01&&d<1.2) lat[k]=Math.min(0.8,Math.max(0.03,lat[k]*0.5+d*0.5)); playAt[k]=0 }
   if(st===1){clk[k].t=P[k].getCurrentTime();clk[k].at=now();clk[k].playing=true;watch[k]=0; if(!primed[k]) primeDone(k);
     if($("#screen").classList.contains("tapme")){clearTap(); cue("")} }
   else clk[k].playing=false;
@@ -414,10 +464,12 @@ function vt(k){ // extrapolated video time
   return raw;
 }
 function songT(k="A"){return vt(k)-shift(k)}
-function play(k){const p=P[k]; if(!p) return; try{p.setPlaybackRate(S.rate);p.playVideo()}catch(e){} wantPlay(k); if(S.running) armTapFallback(k)}
+const lat={A:0.15,B:0.15}, playAt={A:0,B:0}, adj={A:0,B:0};   // learned play() -> PLAYING latency per player (s)
+function play(k){const p=P[k]; if(!p) return; if(clk[k].st!==1) playAt[k]=now(); try{p.setPlaybackRate(S.rate);p.playVideo()}catch(e){} wantPlay(k); if(S.running) armTapFallback(k)}
 function pause(k){const p=P[k]; if(!p) return; try{p.pauseVideo()}catch(e){} watch[k]=0}
 function seekSong(k,t){const p=P[k]; if(!p) return; try{p.seekTo(Math.max(0,songToVid(k,t)),true)}catch(e){} clk[k].at=now(); clk[k].t=Math.max(0,songToVid(k,t)); clk[k].raw=-1}
 function vol(k,v){const p=P[k]; if(!p) return; try{ if(v<=0){p.mute()} else {p.unMute();p.setVolume(v)} }catch(e){}}
+function fadeIn(k,ms){ const steps=4; for(let n=1;n<=steps;n++) setTimeout(()=>{ if(S.running) vol(k,Math.round(100*n/steps)) }, ms*n/steps) }
 function fadeOut(k,ms){ const steps=5; for(let n=1;n<=steps;n++) setTimeout(()=>{ if(S.running) vol(k,Math.round(100*(1-n/steps))||1) }, ms*n/steps) }
 function showPlayers(a,b){$("#ytA").classList.toggle("off",!a);$("#ytB").classList.toggle("off",!b);$("#screen").classList.toggle("split",a&&b)}
 
@@ -441,7 +493,7 @@ function hype(force){
 }
 let lastCount=0;
 function countIn(td){ // 4-3-2-1 on the beats before the first line
-  const per=60/song.bpm, d=vStart()-td; if(d<=0||d>per*4+0.05){ if(d<=0) lastCount=0; return }
+  const per=60/song.bpm, d=(S.lines.length?S.lines[0].on:vStart())-td; if(d<=0||d>per*4+0.05){ if(d<=0) lastCount=0; return }
   const n=Math.ceil(d/per-0.02); if(n!==lastCount&&n>=1&&n<=4){ lastCount=n;
     const e=document.createElement("div"); e.className="hy n"; e.textContent=n; e.style.setProperty("--r","0deg"); e.style.setProperty("--x","0px");
     $("#hype").appendChild(e); setTimeout(()=>e.remove(),520) }
@@ -494,6 +546,7 @@ function fitAnchor(samples,t0){
    ENGINE
    ====================================================================== */
 const engine={};
+const DBG=[]; function dbg(ev,i,t,x){ DBG.push({ev,i,t:t==null?null:+t.toFixed(3),x:x==null?null:+(+x).toFixed(3),w:Math.round(now()),r:S.rate}); if(DBG.length>400) DBG.shift() }
 let raf=0, tick=null;
 function loop(){
   raf=requestAnimationFrame(loop);
@@ -513,7 +566,8 @@ function stop(silent){
   if(engine.cleanup) engine.cleanup();
   engine.frame=null; engine.onState=null; engine.cleanup=null; engine.restart=null;
   setRunUI(false); $("#go").classList.remove("rec"); document.body.classList.remove("recording","myturn"); cue(""); wake(false); clearTap(); lastCount=0;
-  document.querySelectorAll(".ln.turn").forEach(e=>e.classList.remove("turn"));
+  document.querySelectorAll(".ln.turn").forEach(e=>e.classList.remove("turn")); clearWords();
+  document.querySelectorAll(".ln .bar").forEach(b=>{b.style.transition="none";b.style.width="0"});
   renderSide();
 }
 function loopDone(){
@@ -532,41 +586,87 @@ function runFlow(){
   engine.restart=startLoop;
   engine.frame=t=>{
     const td=t-nudge(); const i=lineAt(td); if(S.loops===0) countIn(td);
-    if(i>=0&&i<S.lines.length) setCur(i); else if(i<0) setCur(-1);
+    if(i>=0&&i<S.lines.length){ setCur(i); lightWords(i,td) } else if(i<0) setCur(-1);
     if(i!==lastLine){ if(i>0&&i<S.lines.length&&i%4===0) hype(); lastLine=i }
-    if(td>=vEnd()+0.35){loopDone(); startLoop()}
+    if(i!==S._fl){ S._fl=i; dbg("flow",i,td) }
+    if(td>=vEnd()+0.35){dbg("loop",i,td); loopDone(); startLoop()}
   };
   startLoop();
 }
-/* ---- FOLLOW · ECHO: line -> your turn -> next ---- */
+/* ---- FOLLOW · ECHO: PAC raps a phrase -> you rap it back over the beat -> next ----
+   * your turn = the phrase's own length (at the current speed) + a short breath
+   * the beat rolls under your turn and the words light up at 2Pac's pace (no dead air)
+   * hand-offs are pre-armed: the next player starts muted ~0.5-0.9 s early and is unmuted on
+     the exact song time, so there is no seek/buffer gap between PAC and YOU */
 function runEcho(){
-  engine.master="A"; showPlayers(true,false); vol("A",100);
-  let i=Math.min(S.echoI||0,S.lines.length-1), ph="play", until=0, el=null, fading=false;
-  const playLine=()=>{
-    ph="play"; setCur(i); cue(""); fading=false; vol("A",100);
-    const st=S.lines[i].t+nudge();
-    seekSong("A",st-(i===0?preroll()*0.6:0.25)); play("A");
+  engine.master="A"; vol("A",100);
+  const useBeat=()=>!beatMissing&&P.B&&clk.B.ok&&!!cur("B");
+  let i=Math.min(S.echoI||0,S.lines.length-1), ph="pac";
+  let aArmed=false, aLive=false, bArmed=false, fading=false, tStart=0, el=null, bar=null, logged=false, first=true;
+  const r=()=>S.rate, L=k=>S.lines[k], PRE=0.35;   // PRE: wall seconds a pre-armed player runs muted before its cue
+  showPlayers(true,!!useBeat());
+  const startPac=(armed)=>{
+    ph="pac"; setCur(i); clearWords(); cue(""); fading=false; logged=false; bArmed=false;
+    document.body.classList.remove("myturn");
+    if(!armed){ // cold start (first phrase / resume): seek with a bar of groove before the very first one
+      const st=L(i).t+nudge();
+      seekSong("A",first&&i===0?st-preroll():st-0.25*r()); vol("A",first&&i===0?100:0); play("A");
+      aLive=first&&i===0;
+    }
+    first=false;
   };
-  engine.restart=playLine;
+  const startYou=()=>{
+    const p=L(i); ph="you"; clearWords(); fading=false; aArmed=false;
+    el=$("#lyr").children[i]; el.classList.add("turn"); bar=el.querySelector(".bar");
+    cue("YOUR TURN"); document.body.classList.add("myturn");
+    tStart=now();
+    if(useBeat()){
+      if(!bArmed){ seekSong("B",p.t+nudge()); play("B") }
+      else if(clk.B.playing){ const e=(songT("B")-nudge()-p.t)/r(); adj.B=Math.max(-0.4,Math.min(0.6,adj.B-0.7*e)) } // learn: beat early(+)/late(-)
+      vol("B",100);
+    }
+    const remain=((p.e+0.25*r())-(p.t))/r();
+    bar.style.transition="none"; bar.style.width="0"; void bar.offsetWidth;
+    bar.style.transition=`width ${Math.max(0.3,remain)*1000}ms linear`; bar.style.width="100%";
+    dbg("youStart",i,useBeat()&&clk.B.playing?songT("B")-nudge():null);
+  };
+  engine.restart=()=>{ first=true; startPac(false) };
   engine.frame=t=>{
-    const L=S.lines[i]; if(!L) return;
-    if(ph==="play"){
+    const p=L(i); if(!p) return;
+    if(ph==="pac"){
       const td=t-nudge();
-      if(td>=L.e-0.16&&clk.A.playing&&!fading){ fading=true; fadeOut("A",140) }
-      if(td>=L.e-0.02&&clk.A.playing){
-        pause("A"); ph="turn"; fading=false;
-        const dur=(L.e-L.t)/S.rate*1000+700; until=now()+dur;
-        el=$("#lyr").children[i]; el.classList.add("turn"); cue("YOUR TURN"); document.body.classList.add("myturn");
-        const bar=el.querySelector(".bar"); bar.style.transition="none"; bar.style.width="0"; void bar.offsetWidth;
-        bar.style.transition=`width ${dur}ms linear`; bar.style.width="100%";
+      if(!clk.A.playing||td>p.e+0.6||td<p.t-preroll()-0.6) return;      // stale clock right after a seek
+      if(!aLive&&td>=p.t-0.03){ aLive=true; fadeIn("A",60) }          // pre-armed player reaches the phrase: open it
+      if(!aLive) return;
+      if(!logged){ logged=true; dbg("pacStart",i,td) }
+      if(td<p.on) countIn(td);
+      lightWords(i,td);
+      if(useBeat()&&!bArmed&&td>=p.e-(PRE+lat.B+adj.B)*r()){ bArmed=true; vol("B",0); seekSong("B",p.t-PRE*r()+nudge()); play("B") }
+      if(td>=p.e-0.08&&!fading){ fading=true; fadeOut("A",70) }
+      if(td>=p.e){ pause("A"); aLive=false; dbg("pacEnd",i,td); startYou() }
+    } else {
+      const ct=p.t+(now()-tStart)/1000*r();     // turn clock: exactly the phrase's own length at this speed
+      lightWords(i,Math.max(ct,p.t));
+      const endAt=p.e+0.25*r();
+      const q=(i+1)%S.lines.length;
+      if(!aArmed&&ct>=endAt-(PRE+lat.A+adj.A)*r()){ aArmed=true; vol("A",0); seekSong("A",L(q).t-PRE*r()+nudge()); play("A") }
+      // the armed PAC player reached its phrase: hand over now so its first word is never clipped
+      const aAt=aArmed&&clk.A.playing?songT("A")-nudge():-1;
+      const early=aArmed&&aAt>=L(q).t-0.03&&aAt<L(q).e;
+      if(ct>=endAt-0.12*r()&&useBeat()&&!fading){ fading=true; fadeOut("B",90) }
+      if(ct>=endAt||early){
+        dbg("youEnd",i,ct,(now()-tStart)/1000);
+        // learn the hand-off: arrived early -> arm later next time; still short of its cue -> arm earlier
+        { const e= early ? (endAt-ct)/r() : (aAt>-1 ? (aAt-L(q).t)/r() : -lat.A); adj.A=Math.max(-0.5,Math.min(0.8,adj.A-0.7*e)) }
+        if(useBeat()) pause("B");
+        el.classList.remove("turn"); document.body.classList.remove("myturn"); cue("");
+        i=q; if(i===0) loopDone(); else if(Math.random()<0.5) hype();
+        S.echoI=i; startPac(true);
       }
-    } else if(ph==="turn"&&now()>=until){
-      el&&el.classList.remove("turn"); cue(""); document.body.classList.remove("myturn");
-      i++; if(i>=S.lines.length){i=0; loopDone()} else if(Math.random()<0.55) hype(); S.echoI=i;
-      playLine();
     }
   };
-  playLine();
+  engine.cleanup=()=>{ document.body.classList.remove("myturn"); if(el) el.classList.remove("turn"); pause("B"); vol("A",100); vol("B",100) };
+  startPac(false);
 }
 /* ---- SOLO: beat only + record, then playback in sync ---- */
 let player2=null; // HTMLAudioElement for takes
@@ -580,7 +680,7 @@ async function runSolo(){
   const R=startRec(); let done=false, lastI=-2;
   seekSong(k,vStart()-preroll()); play(k);
   engine.frame=t=>{
-    const td=t-nudge(); const i=lineAt(td); setCur(Math.min(i,S.lines.length-1)); countIn(td);
+    const td=t-nudge(); const i=lineAt(td); setCur(Math.min(i,S.lines.length-1)); countIn(td); lightWords(Math.min(i,S.lines.length-1),td);
     if(i!==lastI){ if(i>0&&i<S.lines.length&&i%4===0) hype(); lastI=i }
     if(clk[k].playing) R.samples.push([now(),t]);
     if(!done&&td>=vEnd()+0.6){done=true; finish()}
@@ -610,7 +710,7 @@ function playTake(){
   let last=0, ended=false;
   engine.onState=(kk,st)=>{ if(kk===k&&st!==1) try{au.pause()}catch(e){} };
   engine.frame=t=>{
-    const td=t-nudge(); const i=lineAt(td); setCur(Math.min(i,S.lines.length-1));
+    const td=t-nudge(); const i=lineAt(td); setCur(Math.min(i,S.lines.length-1)); lightWords(Math.min(i,S.lines.length-1),td);
     if(clk[k].playing){
       const want=(t-T.a)/T.rate + vox();
       if(want>=0&&want<(au.duration||1e9)){
@@ -635,10 +735,10 @@ let curMix=-9;
 function tradeMix(i,twin,au,playback){
   const L=S.lines; const t=songT("A")-nudge();
   // switch slightly early so the swap lands on the line start
-  let j=lineAt(t+0.08); if(j<0) j=-1;
+  let j=lineAt(t+0.025); if(j<0) j=-1;   // tiny lookahead = postMessage latency; phrases butt up against each other
   const mine=j>=0&&j<L.length&&L[j].who==="you";
   const key=(mine?1:0)+(j<0||j>=L.length?2:0);
-  if(key===curMix) return; curMix=key;
+  if(key===curMix) return; curMix=key; dbg(playback?"mixP":"mix",j,t,mine?1:0);
   if(j<0||j>=L.length){ document.body.classList.remove("myturn"); vol("A",100); if(twin) vol("B",0); if(au) au.volume=playback?0.0:0; return }
   document.body.classList.toggle("myturn",mine);
   if(mine){ vol("A",twin?0:14); if(twin) vol("B",100); if(au) au.volume=1 }
@@ -656,7 +756,7 @@ async function runTrade(){
   seekSong("A",startAt); play("A"); if(twin){seekSong("B",startAt); play("B")}
   engine.onState=(k,st)=>{ if(twin&&k==="B"&&st===2&&S.running&&clk.A.playing){ if(++twinFails>2){beatMissing=true} } };
   engine.frame=t=>{
-    const td=t-nudge(); const i=lineAt(td); const ii=Math.min(i,S.lines.length-1); setCur(ii); countIn(td);
+    const td=t-nudge(); const i=lineAt(td); const ii=Math.min(i,S.lines.length-1); setCur(ii); countIn(td); lightWords(ii,td);
     const tw=twin&&!beatMissing;
     tradeMix(i,tw,null,false);
     if(i!==lastI){
@@ -679,7 +779,7 @@ async function runTrade(){
 }
 
 /* ---------------- start / controls ---------------- */
-function ensurePlayers(){ makePlayer("A"); if(S.mode!=="follow") makePlayer("B") }
+function ensurePlayers(){ makePlayer("A"); makePlayer("B") }
 function start(){
   if(!S.lines.length){ msg("LOADING…"); loadLyrics().then(ok=>{ if(ok){renderLyrics(); start()} else msg("LYRICS OFFLINE · TAP RAP IT") }); }
   if(!ytReady||!P.A||!clk.A.ok){ msg("WARMING UP…"); ensurePlayers(); setTimeout(()=>{ if(clk.A.ok){msg("");start()} },700); return }
@@ -776,7 +876,7 @@ $("#nextSong").addEventListener("click",()=>{ stop(); LS.set("lrc:none",0); S.so
   loadLyrics().then(ok=>{ if(ok) renderLyrics(); else msg("LYRICS OFFLINE") });
   raf=requestAnimationFrame(loop);
   if("serviceWorker" in navigator&&location.protocol==="https:") navigator.serviceWorker.register("sw.js").catch(()=>{});
-  window.RAPIT={S,P,clk,songT,engine,SONGS,hype,primed,SRC,lineAt,get au(){return player2},vox}; // debug handle
+  window.RAPIT={adj,lat,DBG,S,P,clk,songT,engine,SONGS,hype,primed,SRC,lineAt,get beatMissing(){return beatMissing},get au(){return player2},vox}; // debug handle
 })();
 </script>
 </body>
